@@ -1,0 +1,49 @@
+---
+import { getRuntime } from '@astrojs/cloudflare/runtime';
+
+getRuntime(Astro.request);
+
+import { get } from '../post.json'
+
+const { slug } = Astro.params;
+
+let post = null;
+let refer;
+try {
+  const Referer = Astro.request.headers.get('Referer');
+  refer = Referer;
+  const response = await get(slug);
+  
+  post = response.body.data.post;
+  if (refer && refer.indexOf('facebook') > -1) {
+    return Response.redirect(post.link, 301);
+  }
+} catch (error) {
+  return new Response(error.message, {
+    status: 404,
+    statusText: 'Not found',
+  });
+}
+
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{post?.title}</title>
+</head>
+<body>
+  <div class="w-[768px] mx-auto mt-10">
+    {!post ? (
+      <h1>Post not found</h1>
+    ) : (
+      <div class="">
+        <h1 class="text-5xl font-bold text-gray-900 mb-4">{post.title}</h1>
+        <div class="content" set:html={post.content}></div>
+      </div>
+    )}
+  </div>
+</body>
+</html>
